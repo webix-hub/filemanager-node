@@ -1,0 +1,33 @@
+{
+  "name": "wfs-ls",
+  "version": "1.0.0",
+  "description": "Webix File Manager - example of nodejs backend",
+  "main": "index.js",
+  "scripts": {
+    "local": "node ./index.js local",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webix-hub/filemanager-node.git"
+  },
+  "keywords": [
+    "webix",
+    "ui",
+    "filemanager",
+    "files"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/webix-hub/filemanager-node/issues"
+  },
+  "homepage": "https://github.com/webix-hub/filemanager-node#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "busboy": "^0.3.1",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "wfs-local": "^0.3.0"
+  }
+}
