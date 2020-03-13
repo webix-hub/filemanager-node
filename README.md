@@ -6,6 +6,12 @@ Backed for Webix File Manager
 Serve local files
 
 ```shell script
-npm run local path-to-web-root
+npm run local s3://bucket-name/
 ```
+
+The credentials will be taken from next env vars 
+
+  - AWS_ACCESS_KEY_ID
+  - AWS_SECRET_ACCESS_KEY
+
 

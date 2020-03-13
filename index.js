@@ -1,8 +1,10 @@
 // init Web File System
-const wfs = require("wfs-local");
+const wfs = require("wfs-s3");
 const root = process.argv[3];
-const drive = new wfs.LocalFiles(root, null, {
- 	verbose: true
+const drive = new wfs.S3(root, null, {
+  accessKey: process.env.AWS_ACCESS_KEY_ID,
+  secretKey: process.env.AWS_SECRET_ACCESS_KEY,
+  verbose: true
 });
 
 
