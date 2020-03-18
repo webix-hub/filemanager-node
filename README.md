@@ -3,7 +3,7 @@ Backed for Webix File Manager
 
 ### How to build
 
-``````shell script
+```shell script
 npm install
 ```
 
