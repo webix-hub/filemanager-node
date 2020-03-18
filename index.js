@@ -21,8 +21,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/info", async (req, res, next)=>{
 	const id = req.query.id;
+	const { free, used } = await drive.stats(id);
 	res.send({
-		stats:{ free:10000000, used:5000000, total: 15000000 },
+		stats:{ free, used, total: free+used },
 		features:{ preview:{}, meta:{} }
 	});
 });
@@ -35,7 +36,7 @@ app.get("/files", async (req, res, next)=>{
 		exclude: a => a.indexOf(".") === 0
 	};
 	if (search){
-		subFolders: true,
+		config.subFolders = true;
 		config.include = a => a.indexOf(search) !== -1;
 	}
 
@@ -58,32 +59,34 @@ app.get("/icons/:size/:type/:name", async (req, res, next)=>{
 
 
 app.post("/copy", async (req, res, next)=>{
-	const name = req.body.id;
-	const to = req.body.to;
+	const source = req.body.id;
+	const target = req.body.to;
 
-	res.send(await drive.info(await drive.copy(name, to, { preventNameCollision: true })));
+	res.send(await drive.info(await drive.copy(source, target, "", { preventNameCollision: true })));
 });
 
 app.post("/move", async (req, res, next)=>{
-	const name = req.body.id;
-	const to = req.body.to;
+	const source = req.body.id;
+	const target = req.body.to;
 
-	res.send(await drive.info(await drive.move(name, to), { preventNameCollision: true }));
+	res.send(await drive.info(await drive.move(source, target, "", { preventNameCollision: true })));
 });
 
 app.post("/rename", async (req, res, next)=>{
-	const name = req.body.id;
-	const newName = path.join(path.dirname(name), req.body.name);
+	const source = req.body.id;
+	const target = path.dirname(source);
+	const name = req.body.name;
 
-	res.send(await drive.info(await drive.move(name, newName, { preventNameCollision: true })));
+	res.send(await drive.info(await drive.move(source, target, name, { preventNameCollision: true })));
 });
 
 app.post("/upload", async (req, res, next)=>{
 	const busboy = new Busboy({ headers: req.headers });
 						
 	busboy.on("file", async (field, file, name) => {
-		const target = path.join(req.body.id, name);
-		res.send(await drive.info(await drive.write(target, file, { preventNameCollision: true })));
+		console.log(req.body, name)
+		const target = await drive.make(req.query.id,  name, false, { preventNameCollision: true });
+		res.send(await drive.info(await drive.write(target, file)));
 	});
 
 	req.pipe(busboy);
@@ -91,14 +94,12 @@ app.post("/upload", async (req, res, next)=>{
 
 
 app.post("/makedir", async (req, res, next)=>{
-	const name = path.join(req.body.id, req.body.name);
-	const id = await drive.mkdir(name, { preventNameCollision: true })
+	const id = await drive.make(req.body.id, req.body.name, true, { preventNameCollision: true })
 	res.send(await drive.info(id));
 });
 
 app.post("/makefile", async (req, res, next)=>{
-	const name = path.join(req.body.id, req.body.name);
-	const id = await drive.write(name, Readable.from([""]), { preventNameCollision: true })
+	const id = await drive.make(req.body.id, req.body.name, false, { preventNameCollision: true })
 	res.send(await drive.info(id));
 });
 
@@ -116,19 +117,25 @@ app.post("/text", async (req, res, next)=>{
 
 app.get("/text", async (req, res, next)=>{
 	const data = await drive.read(req.query.id);
+	data.pipe(res);
+});
+
+app.get("/direct", async (req, res, next) => {
+	const id = req.query.id;
+	const data = await drive.read(req.query.id);
 	const info = await drive.info(req.query.id);
 	const name = encodeURIComponent(info.value);
 
 	let disposition = "inline";
-	if (req.query.download)
+	if (req.query.download){
 		disposition = "attachment";
-	
+	}
+
 	res.writeHead(200, {
 		"Content-Disposition": `${disposition}; filename=${name}`
 	});
 	data.pipe(res);
 });
-
 
 async function getIconURL(size, type, name){
 	size = size.replace(/[^A-Za-z0-9.]/g, "");
@@ -140,8 +147,7 @@ async function getIconURL(size, type, name){
 	try {
 		stat = await fs.promises.stat(name);
 	} catch(e){
-		type = "icons/" + size + "/types/" + type;
-		name = type + path.extname(name)
+		name = "icons/" + size + "/types/" + type + ".svg";
 	}
 
 	return name
