@@ -7,6 +7,7 @@ Serve local files
 
 ```shell script
 npm install
+
 npm run local s3://bucket-name/
 ```
 
