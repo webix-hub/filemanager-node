@@ -1,4 +1,4 @@
-Backed for Webix File Manager
+Amazon S3 Backend for Webix File Manager
 ==================
 
 ### How to start
