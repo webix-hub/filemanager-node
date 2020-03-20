@@ -6,6 +6,7 @@ Amazon S3 Backend for Webix File Manager
 Serve local files
 
 ```shell script
+npm install
 npm run local s3://bucket-name/
 ```
 
