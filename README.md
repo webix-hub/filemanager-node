@@ -15,3 +15,5 @@ npm run local D:\\some\\folder
 npm run local /media/user/d/some/folder
 ```
 
+Note that you need to use NodeJS v12.3.0 or higher to be able to write into text files.
+
