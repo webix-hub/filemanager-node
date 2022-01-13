@@ -85,12 +85,31 @@ app.post("/upload", async (req, res, next)=>{
 						
 	busboy.on("file", async (field, file, name) => {
 		console.log(req.body, name)
-		const target = await drive.make(req.query.id,  name, false, { preventNameCollision: true });
-		res.send(await drive.info(await drive.write(target, file)));
+
+		busboy.on('field', async function(field, val) {
+			// support folder upload
+			let base = req.query.id;
+			
+			const parts = val.split("/");
+			if (parts.length > 1){
+				for (let i = 0; i < parts.length - 1; ++i){
+					const p = parts[i];
+					const exists = await drive.exists(base + "/" + p);
+					if (!exists) {
+						base = await drive.make(base, p, true);
+					} else {
+						base = base + "/" + p;
+					}
+				}
+			}
+
+			const target = await drive.make(base, name, false, { preventNameCollision: true });
+			res.send(await drive.info(await drive.write(target, file)));
+		});
 	});
 
 	req.pipe(busboy);
-})
+});
 
 
 app.post("/makedir", async (req, res, next)=>{
