@@ -52,8 +52,8 @@ app.get("/folders", async (req, res, next)=>{
 	}));
 });
 
-app.get("/icons/:size/:type/:name", async (req, res, next)=>{
-	url = await getIconURL(req.params.size, req.params.type, req.params.name);
+app.get("/icons/:skin/:size/:type/:name", async (req, res, next)=>{
+	url = await getIconURL(req.params.size, req.params.type, req.params.name, req.params.skin);
 	res.sendFile(path.join(__dirname, url))
 })
 
@@ -156,15 +156,22 @@ app.get("/direct", async (req, res, next) => {
 	data.pipe(res);
 });
 
-async function getIconURL(size, type, name){
+async function getIconURL(size, type, name, skin){
 	size = size.replace(/[^A-Za-z0-9.]/g, "");
 	name = name.replace(/[^A-Za-z0-9.]/g, "");
-	type - type.replace(/[^A-Za-z0-9.]/g, "");
+	type = type.replace(/[^A-Za-z0-9.]/g, "");
+	skin = skin.replace(/[^A-Za-z0-9.]/g, "");
 
 	name = "icons/" + size + "/" + name;
 
 	try {
-		stat = await fs.promises.stat(name);
+		const stat = await fs.promises.stat(name);
+	} catch(e){
+		name = "icons/" + size + "/types/" + skin + "/" + type + ".svg";
+	}
+
+	try {
+		const stat = await fs.promises.stat(name);
 	} catch(e){
 		name = "icons/" + size + "/types/" + type + ".svg";
 	}
