@@ -52,11 +52,15 @@ app.get("/folders", async (req, res, next)=>{
 	}));
 });
 
-app.get("/icons/:skin/:size/:type/:name", async (req, res, next)=>{
-	url = await getIconURL(req.params.size, req.params.type, req.params.name, req.params.skin);
+app.get("/icons/:size/:type/:name", async (req, res, next)=>{
+	const url = await getIconURL(req.params.size, req.params.type, req.params.name, "none");
 	res.sendFile(path.join(__dirname, url))
-})
+});
 
+app.get("/icons/:skin/:size/:type/:name", async (req, res, next)=>{
+	const url = await getIconURL(req.params.size, req.params.type, req.params.name, req.params.skin);
+	res.sendFile(path.join(__dirname, url))
+});
 
 app.post("/copy", async (req, res, next)=>{
 	const source = req.body.id;
