@@ -53,7 +53,7 @@ app.get("/folders", async (req, res, next)=>{
 });
 
 app.get("/icons/:size/:type/:name", async (req, res, next)=>{
-	const url = await getIconURL(req.params.size, req.params.type, req.params.name, "none");
+	const url = await getIconURL(req.params.size, req.params.type, req.params.name, "");
 	res.sendFile(path.join(__dirname, url))
 });
 
@@ -171,8 +171,10 @@ async function getIconURL(size, type, name, skin){
 	try {
 		const stat = await fs.promises.stat(name);
 	} catch(e){
-		name = "icons/" + size + "/types/" + skin + "/" + type + ".svg";
+		name = "icons/" + size + "/types/" + (skin ? skin + "/" : "") + type + ".svg";
 	}
+
+	if (!skin) return name;
 
 	try {
 		const stat = await fs.promises.stat(name);
