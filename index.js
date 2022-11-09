@@ -166,23 +166,22 @@ async function getIconURL(size, type, name, skin){
 	type = type.replace(/[^A-Za-z0-9.]/g, "");
 	skin = skin.replace(/[^A-Za-z0-9.]/g, "");
 
-	name = "icons/" + size + "/" + name;
+	const names = [
+		// get by name
+		`icons/default/${size}/${name}`,
+		// get by type with skin or not
+		( skin ? `icons/${skin}/${size}/types/${type}.svg` : null),
+		`icons/default/${size}/types/${type}.svg`
+	].filter(a => a);
 
-	try {
-		const stat = await fs.promises.stat(name);
-	} catch(e){
-		name = "icons/" + size + "/types/" + (skin ? skin + "/" : "") + type + ".svg";
+	for (let i = 0; i < names.length-1; i++){
+		try {
+			await fs.promises.stat(names[i]);
+			return names[i];
+		} catch (e) { }
 	}
 
-	if (!skin) return name;
-
-	try {
-		const stat = await fs.promises.stat(name);
-	} catch(e){
-		name = "icons/" + size + "/types/" + type + ".svg";
-	}
-
-	return name
+	return names[names.length-1];
 }
 
 
@@ -192,6 +191,6 @@ app.use(express.static("./"));
 
 const port = "3200";
 const host = "localhost";
-var server = app.listen(port, host, function () {
+app.listen(port, host, function () {
 	console.log("Server is running on port " + port + "...");
 });
