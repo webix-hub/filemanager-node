@@ -121,7 +121,7 @@ app.post("/upload", async (req, res, next) => {
 
 	busboy.on("file", async (field, file, name) => {
 		console.log(req.body, name);
-		files[name] = new PassThrough({ highWaterMark: 3.2e7 }); // buffer threshold - 32MB
+		files[name] = new PassThrough({ highWaterMark: 32 * 1024 ** 2 }); // buffer threshold - 32MB
 		file.pipe(files[name]);
 	});
 
