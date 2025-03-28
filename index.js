@@ -32,6 +32,7 @@ app.get("/files", async (req, res, next)=>{
 	const id = req.query.id;
 	const search = req.query.search;
 	const filter = req.query.filter ? JSON.parse(req.query.filter) : null;
+	const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
 
 	const config = {
 		exclude: file => file.value.startsWith(".")
@@ -44,7 +45,14 @@ app.get("/files", async (req, res, next)=>{
 	}
 
 	let files = await drive.list(id, config);
-	res.send(files);
+	if (limit) {
+		res.send({
+			files: files.slice(0, limit),
+			total: files.length,
+		});
+	} else {
+		res.send(files);
+	}
 });
 
 app.get("/folders", async (req, res, next)=>{
