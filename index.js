@@ -31,16 +31,28 @@ app.get("/info", async (req, res, next)=>{
 app.get("/files", async (req, res, next)=>{
 	const id = req.query.id;
 	const search = req.query.search;
+	const filter = req.query.filter ? JSON.parse(req.query.filter) : null;
+	const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
 
 	const config = {
-		exclude: a => a.indexOf(".") === 0
+		exclude: file => file.value.startsWith(".")
 	};
-	if (search){
+
+	if (search || filter) {
+		const fileFilter = createFileFilter(filter);
 		config.subFolders = true;
-		config.include = a => a.indexOf(search) !== -1;
+		config.include = file => file.value.includes(search) && fileFilter(file);
 	}
 
-	res.send( await drive.list(id, config));
+	let files = await drive.list(id, config);
+	if (limit) {
+		res.send({
+			files: files.slice(0, limit),
+			total: files.length,
+		});
+	} else {
+		res.send(files);
+	}
 });
 
 app.get("/folders", async (req, res, next)=>{
@@ -48,7 +60,7 @@ app.get("/folders", async (req, res, next)=>{
 		skipFiles: true,
 		subFolders: true,
 		nested: true,
-		exclude: a => a.indexOf(".") === 0
+		exclude: file => file.value.indexOf(".") === 0
 	}));
 });
 
@@ -184,7 +196,30 @@ async function getIconURL(size, type, name, skin){
 	return names[names.length-1];
 }
 
+function createFileFilter(filter) {
+	if (!filter) return () => true;
 
+	const { type, date, size } = filter;
+
+	const filterByType = type ?
+		file => type.includes(file.type) :
+		() => true;
+
+	const filterByDate = date ?
+		file => {
+			const fileDate = new Date(file.date * 1000).toISOString();
+			return date.start <= fileDate && fileDate < date.end;
+		} :
+		() => true;
+
+	const filterBySyze = size ?
+		file => size.some(range =>
+			range.start <= file.size && (range.end === 0 || file.size <= range.end)
+		) :
+		() => true;
+
+	return file => filterByType(file) && filterByDate(file) && filterBySyze(file);
+}
 
 // load other assets
 app.use(express.static("./"));
