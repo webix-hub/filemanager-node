@@ -437,10 +437,10 @@ vary@^1, vary@~1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-wfs-local@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/wfs-local/-/wfs-local-1.0.0.tgz#9766bc19a18edb53ad9d825f9c6d512865ee2bac"
-  integrity sha512-HCDjtlXUvNae2n7Wj1QC3YLrW0rQjM3nflnPRF3teryGf60eLDdL3poeqlYG3BAqXfYn2FhOlj6QOsgzeUOjHA==
+wfs-local@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/wfs-local/-/wfs-local-1.1.0.tgz#9766bc19a18edb53ad9d825f9c6d512865ee2bac"
+  integrity sha512-Tm24DYz45N/dmBJdPqbV1sFyuaAYAFjuU6jyI3FsEl4IzJ/lQ1Kv+zuJ/G2XIJB7wrF8fi1MNi4swz28qjFG3w==
   dependencies:
     "@types/fs-extra" "^5.0.4"
     fs-extra "^7.0.1"
