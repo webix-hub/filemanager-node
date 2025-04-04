@@ -97,7 +97,12 @@ app.post("/rename", async (req, res, next)=>{
 });
 
 app.post("/upload", async (req, res, next) => {
-	const busboy = new Busboy({ headers: req.headers });
+	const busboy = new Busboy({ 
+		headers: req.headers,
+		limits: {
+			fileSize: 10 * 1024 ** 2 // max file upload size - 10MB by default
+		}
+	});
 
 	const files = {};
 	let path = [];
@@ -109,8 +114,12 @@ app.post("/upload", async (req, res, next) => {
 	});
 
 	busboy.on("file", async (field, file, name) => {
-		console.log(req.body, name);
-		files[name] = new PassThrough({ highWaterMark: 32 * 1024 ** 2 }); // buffer threshold - 32MB
+		files[name] = new PassThrough({ highWaterMark: 10 * 1024 ** 2 }); // buffer size, not the max file upload size
+
+		file.on("limit", () => {
+			files[name].exceedsLimit = true;
+		});
+
 		file.pipe(files[name]);
 	});
 
@@ -128,10 +137,16 @@ app.post("/upload", async (req, res, next) => {
 			}
 		}
 
-		for (const name in files) {
+		for (const name in files) {			
+			if (files[name].exceedsLimit) {
+				res.status(500).send("Error uploading file");
+				continue;
+			}
+
 			const target = await drive.make(base, name, false, {
 				preventNameCollision: true,
 			});
+
 			res.send(await drive.info(await drive.write(target, files[name])));
 		}
 	});
