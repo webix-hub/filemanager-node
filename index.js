@@ -13,7 +13,7 @@ const path = require("path");
 const Busboy = require("busboy");
 const express = require("express");
 const bodyParser = require("body-parser");
-const { Readable } = require('stream')
+const { Readable, PassThrough } = require('stream')
 
 const app = express();
 app.use(cors());
@@ -96,37 +96,63 @@ app.post("/rename", async (req, res, next)=>{
 	res.send(await drive.info(await drive.move(source, target, name, { preventNameCollision: true })));
 });
 
-app.post("/upload", async (req, res, next)=>{
-	const busboy = new Busboy({ headers: req.headers });
-						
-	busboy.on("file", async (field, file, name) => {
-		console.log(req.body, name)
+app.post("/upload", async (req, res, next) => {
+	const busboy = new Busboy({ 
+		headers: req.headers,
+		limits: {
+			fileSize: 10 * 1024 ** 2 // max file upload size - 10MB by default
+		}
+	});
 
-		busboy.on('field', async function(field, val) {
-			// support folder upload
-			let base = req.query.id;
-			
-			const parts = val.split("/");
-			if (parts.length > 1){
-				for (let i = 0; i < parts.length - 1; ++i){
-					const p = parts[i];
-					const exists = await drive.exists(base + "/" + p);
-					if (!exists) {
-						base = await drive.make(base, p, true);
-					} else {
-						base = base + "/" + p;
-					}
-				}
+	const files = {};
+	let path = [];
+
+	busboy.on("field", async (field, val) => {
+		if (field === "upload_fullpath") {
+			path = val.split("/").slice(0, -1);
+		}
+	});
+
+	busboy.on("file", async (field, file, name) => {
+		files[name] = new PassThrough({ highWaterMark: 10 * 1024 ** 2 }); // buffer size, not the max file upload size
+
+		file.on("limit", () => {
+			files[name].exceedsLimit = true;
+		});
+
+		file.pipe(files[name]);
+	});
+
+	busboy.on("finish", async () => {
+		let base = req.query.id;
+
+		// support folder upload
+		for (let i = 0; i < path.length; ++i) {
+			const p = path[i];
+			const newBase = base + "/" + p;
+			if (await drive.exists(newBase)) {
+				base = newBase;
+			} else {
+				base = await drive.make(base, p, true);
+			}
+		}
+
+		for (const name in files) {			
+			if (files[name].exceedsLimit) {
+				res.status(500).send("Error uploading file");
+				continue;
 			}
 
-			const target = await drive.make(base, name, false, { preventNameCollision: true });
-			res.send(await drive.info(await drive.write(target, file)));
-		});
+			const target = await drive.make(base, name, false, {
+				preventNameCollision: true,
+			});
+
+			res.send(await drive.info(await drive.write(target, files[name])));
+		}
 	});
 
 	req.pipe(busboy);
 });
-
 
 app.post("/makedir", async (req, res, next)=>{
 	const id = await drive.make(req.body.id, req.body.name, true, { preventNameCollision: true })
